@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תפוס את הנר</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #fffacd;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            color: #ff8c00;
+            font-size: 36px;
+            margin-top: 20px;
+        }
+        .game-container {
+            margin-top: 20px;
+            position: relative;
+            width: 300px;
+            height: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            border: 2px solid #ffa500;
+            border-radius: 10px;
+            background-color: #f5deb3;
+        }
+        .candle {
+            width: 40px;
+            height: 120px;
+            background-color: #eee;
+            margin: 5px;
+            border-radius: 5px;
+            display: inline-block;
+            position: relative;
+        }
+        .candle.lit {
+            background-color: #ffc107;
+        }
+        .flame {
+            width: 10px;
+            height: 20px;
+            background-color: orange;
+            border-radius: 50%;
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+        }
+        .candle.lit .flame {
+            display: block;
+        }
+        .sun {
+            width: 30px; /* הנר מוקטן */
+            height: 90px;
+            background-color: #32cd32;
+            border-radius: 5px;
+            position: absolute;
+            cursor: pointer;
+        }
+        .timer {
+            margin-top: 20px;
+            font-size: 22px;
+            color: #b22222;
+        }
+        .message {
+            margin-top: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #6a5acd;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #ff6347;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            box-shadow: 2px 2px 5px gray;
+        }
+        button:hover {
+            background-color: #ff4500;
+        }
+        .instructions-box {
+            width: 250px;
+            margin: 20px auto;
+            background-color: #f0e68c;
+            color: #8b4513;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .controls button {
+            margin: 5px;
+        }
+        .candles-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>תפוס את הנר!</h1>
+    <div class="instructions-box">
+        <p>המשחק מתחיל עם 8 נרות בחנוכייה. הנר הירוק קופץ ממקום למקום. לחצו עליו כדי להדליק נר בחנוכייה. הדליקו את כל הנרות לפני שהזמן נגמר!</p>
+    </div>
+    <div class="controls">
+        <button id="start-button" onclick="startGame()">התחל משחק</button>
+        <div class="timer">זמן שנותר: <span id="timer">45</span></div>
+    </div>
+    <div class="candles-container" id="candles"></div>
+    <div class="game-container" id="game-container">
+        <div id="sun" class="sun" style="display: none;"></div>
+    </div>
+    <div id="result" class="message"></div>
+
+    <script>
+        const gameContainer = document.getElementById("game-container");
+        const sun = document.getElementById("sun");
+        const candlesContainer = document.getElementById("candles");
+        const timerDisplay = document.getElementById("timer");
+        const resultDisplay = document.getElementById("result");
+        const startButton = document.getElementById("start-button");
+        let timer = 45;
+        let timerInterval;
+        let litCount = 0;
+        let streak = 0;
+
+        function createCandles() {
+            candlesContainer.innerHTML = "";
+            for (let i = 0; i < 8; i++) {
+                const candle = document.createElement("div");
+                candle.classList.add("candle");
+                const flame = document.createElement("div");
+                flame.classList.add("flame");
+                candle.appendChild(flame);
+                candlesContainer.appendChild(candle);
+            }
+        }
+
+        function moveSun() {
+            const x = Math.random() * (gameContainer.clientWidth - sun.offsetWidth);
+            const y = Math.random() * (gameContainer.clientHeight - sun.offsetHeight);
+            sun.style.left = `${x}px`;
+            sun.style.top = `${y}px`;
+            sun.style.display = "block";
+
+            setTimeout(() => {
+                if (sun.style.display !== "none") {
+                    streak = 0;
+                    moveSun();
+                }
+            }, 3000); // מתחלף כל 3 שניות בקצב אחיד
+        }
+
+        function lightCandle() {
+            if (litCount < 8) {
+                const candle = candlesContainer.children[litCount];
+                candle.classList.add("lit");
+                litCount++;
+                streak++;
+
+                if (streak === 3) {
+                    timer += 5;
+                    timerDisplay.textContent = timer;
+                    streak = 0;
+                    alert("בונוס זמן! 5 שניות נוספות נוספו.");
+                }
+
+                if (litCount === 8) {
+                    clearInterval(timerInterval);
+                    resultDisplay.textContent = "כל הכבוד! הדלקתם את כל הנרות!";
+                    sun.style.display = "none";
+                    showRestartButton();
+                } else {
+                    moveSun();
+                }
+            }
+        }
+
+        function startTimer() {
+            timer = 45;
+            timerDisplay.textContent = timer;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timer--;
+                timerDisplay.textContent = timer;
+                if (timer === 0) {
+                    clearInterval(timerInterval);
+                    resultDisplay.textContent = "נגמר הזמן! נסו שוב!";
+                    sun.style.display = "none";
+                    showRestartButton();
+                }
+            }, 1000);
+        }
+
+        function startGame() {
+            resultDisplay.textContent = "";
+            litCount = 0;
+            streak = 0;
+            startButton.style.display = "none";
+            createCandles();
+            startTimer();
+            moveSun();
+        }
+
+        function showRestartButton() {
+            const restartButton = document.createElement("button");
+            restartButton.textContent = "שחק שוב";
+            restartButton.onclick = () => {
+                restartButton.remove();
+                startGame();
+            };
+            document.body.appendChild(restartButton);
+        }
+
+        sun.addEventListener("click", () => {
+            sun.style.display = "none";
+            lightCandle();
+        });
+    </script>
+</body>
+</html>
